@@ -1,3 +1,4 @@
+{{-- We have put the list of all the restaurants on this view. --}}
 <h1>
     <a href="/Hari's_Parathas"> Hari's Parathas
 </h1>

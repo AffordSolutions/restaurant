@@ -27,5 +27,7 @@ Route::view("/Urmila's_Gujarati","urmila");
 Route::view("getFromReqRes","getRequest");
 Route::get('/sendGetRequest',[GetController::class,'getThat']);
 //Route::view("/gotData","gotData");
+
+// Go to this URL when you want to make API call to GlobalFood Accepted Orders API. 
 Route::get('/queryGF',[PollController::class,'poll']);
 
