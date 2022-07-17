@@ -21,6 +21,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post("https://reqres.in/api/users?page=2",[OrderController::class,'print']);
 
+Route::get("/integration",[OrderController::class,'print2']);
+
 
 // Route::post("http://dhruvsprojects.tech/api/integration",[OrderController::class,'print']);
 

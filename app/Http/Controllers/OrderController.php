@@ -14,4 +14,9 @@ class OrderController extends Controller
         // return $order->name;
         return "Successful.";
     }
+
+    function print2(Request $request){
+        
+        return "$request has been received.";
+    }
 }

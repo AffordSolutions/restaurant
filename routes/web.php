@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GetController;
+use App\Http\Controllers\PollController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,3 +22,10 @@ Route::get('/', function () {
 Route::view("/Hari's_Parathas","hari");
 Route::view("/Kita's_Sandwiches","kita");
 Route::view("/Urmila's_Gujarati","urmila");
+
+//Testing of sending HTTP Get request:
+Route::view("getFromReqRes","getRequest");
+Route::get('/sendGetRequest',[GetController::class,'getThat']);
+//Route::view("/gotData","gotData");
+Route::get('/queryGF',[PollController::class,'poll']);
+
