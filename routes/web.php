@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GetController;
 use App\Http\Controllers\PollController;
+use App\Http\Controllers\DatabaseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,10 +19,11 @@ use App\Http\Controllers\PollController;
 Route::get('/', function () {
     return view('welcome');
 });
-
-Route::view("/Hari's_Parathas","hari");
-Route::view("/Kita's_Sandwiches","kita");
-Route::view("/Urmila's_Gujarati","urmila");
+/*
+Route::view("/The_Paratha_Restaurant","tpr");
+Route::view("/The_Sandwich_Restaurant","tsr");
+Route::view("/The_Gujarati_Restaurant","tgr");
+*/
 
 //Testing of sending HTTP Get request:
 Route::view("getFromReqRes","getRequest");
@@ -31,3 +33,5 @@ Route::get('/sendGetRequest',[GetController::class,'getThat']);
 // Go to this URL when you want to make API call to GlobalFood Accepted Orders API. 
 Route::get('/queryGF',[PollController::class,'poll']);
 
+//Get data from 'restaurants' database:
+Route::get('/{id}',[DatabaseController::class,'uidInfo',['uidInfo' => 'id']]);

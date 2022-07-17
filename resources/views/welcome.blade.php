@@ -1,10 +1,10 @@
 {{-- We have put the list of all the restaurants on this view. --}}
 <h1>
-    <a href="/Hari's_Parathas"> Hari's Parathas
+    <a href="/0"> The Paratha Restaurant
 </h1>
 <h1>
-    <a href="/Kita's_Sandwiches "> Kita's Sandwiches
+    <a href="/1"> The Sandwich Restaurant
 </h1>
 <h1>
-    <a href="/Urmila's_Gujarati"> Urmila's Gujarati
+    <a href="/2"> The Gujarati Restaurant
 </h1>
