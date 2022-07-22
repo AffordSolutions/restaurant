@@ -34,4 +34,4 @@ Route::get('/sendGetRequest',[GetController::class,'getThat']);
 Route::get('/queryGF',[PollController::class,'poll']);
 
 //Get data from 'restaurants' database:
-Route::get('/{id}',[DatabaseController::class,'uidInfo',['uidInfo' => 'id']]);
+Route::get('/restaurants/{endChars}',[DatabaseController::class,'uidInfo',['uidInfo' => 'endChars']]);
