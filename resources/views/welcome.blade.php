@@ -1,10 +1,10 @@
 {{-- We have put the list of all the restaurants on this view. --}}
 <h1>
-    <a href="/0"> The Paratha Restaurant
+    <a href="/restaurants/parathaSomeDay"> That Paratha Restaurant
 </h1>
 <h1>
-    <a href="/1"> The Sandwich Restaurant
+    <a href="/restaurants/sandwichEveryday"> That Sandwich Restaurant
 </h1>
 <h1>
-    <a href="/2"> The Gujarati Restaurant
+    <a href="/restaurants/gujaratiToday"> That Gujarati Restaurant
 </h1>
