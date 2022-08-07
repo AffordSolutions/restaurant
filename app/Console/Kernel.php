@@ -13,9 +13,15 @@ class Kernel extends ConsoleKernel
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
+
+    // For schedules to run locally, run the artisan command: 'php artisan schedule:work' 
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+        $schedule->call(function(){
+            $controller = new \App\Http\Controllers\PollController();
+            $controller->poll();
+        })->everyMinute();
     }
 
     /**
