@@ -21,7 +21,7 @@ class Kernel extends ConsoleKernel
         $schedule->call(function(){
             $controller = new \App\Http\Controllers\PollController();
             $controller->poll();
-        })->everyMinute();
+        })->everyFiveMinutes(); // The task scheduler will run every 5 minutes.
     }
 
     /**

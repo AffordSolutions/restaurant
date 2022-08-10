@@ -24,19 +24,20 @@ class PollController extends Controller
         /*
         The commented code in this method had to be commented as 
             some parts of the order contain array(s).
-            I have yet to learn to save data received as array(s) in a table field(s).  
+        I have learned to save data received as array(s) in table fields,
+            but for the purpose of this project, these arrays do not seem to be
+            needed to be saved in my database.
         */
         $order = new order;
         $order->instructions = $res->instructions;
         //$order->coupons = $res->coupons;
-        // $order->tax_list = $res->tax_list;
         $order->missed_reason  = $res->missed_reason ;
         $order->billing_details  = $res->billing_details ;
         $order->fulfillment_option  = $res->fulfillment_option ;
         $order->table_number  = $res->table_number ;
         $order->ready  = $res->ready ;
         $order->updated_at  = $res->updated_at ;
-         $order->id  = $res->id ;
+        $order->id  = $res->id ;
         $order->total_price  = $res->total_price ;
         $order->sub_total_price  = $res->sub_total_price ;
         $order->tax_value  = $res->tax_value ;
@@ -66,7 +67,6 @@ class PollController extends Controller
         $order->restaurant_phone = $res->restaurant_phone;
         $order->restaurant_timezone = $res->restaurant_timezone;
         $order->card_type = $res->card_type;
-        // $order->used_payment_methods = $res->used_payment_methods;
         $order->company_account_id = $res->company_account_id;
         $order->pos_system_id = $res->pos_system_id;
         $order->restaurant_key = $res->restaurant_key;
@@ -87,6 +87,10 @@ class PollController extends Controller
         $order->client_address = $res->client_address;
         $order->client_address_parts = $res->client_address_parts;
         // $order->items = $res->items;
+        // $order->tax_list_type = $res->tax_list[0]->type;
+        // $order->tax_list_value = $res->tax_list[1]->value;
+        // $order->tax_list_rate = $res->tax_list[2]->rate;
+        $order->used_payment_methods_0 = $res->used_payment_methods[0];
         $order->save();
     }
 
@@ -98,27 +102,26 @@ class PollController extends Controller
         foreach($restaurantTable as $restaurant){
              $restaurantKey = $restaurant->Restaurant_Key;
              $response = Http::withHeaders([
-                'Authorization' => $restaurantKey,//$restaurantKey,
+                'Authorization' => $restaurantKey,
                 'Accept' => 'application/json',
                 'Glf-Api-Version' => '1'
                ])->post('https://pos.globalfoodsoft.com/pos/order/pop');
-               $emptyResponse = '{"count":0,"orders":[]}';
-            if($response != $emptyResponse){
-                $decodedResponse = json_decode($response);
-                $orderDetails = $decodedResponse->orders[0];
-                $this->storeOrder($orderDetails);
-                //DB::insert('insert into orders(completeOrder) values (\'' . $response . '\')');
+               //$emptyResponse = '{"count":0,"orders":[]}';
+            //if($response != $emptyResponse){
+            $decodedResponse = json_decode($response);
+            $count = $decodedResponse->count; /* The total number of orders received by 
+                all the restaurants registered on the GloriaFood under your partnernet account
+                combined. */
+            for($i = 0; $i < $count; $i++){ /* Keep looping through the orders
+                until all the orders are looped through.
+                */
+                $currentOrderDetails = $decodedResponse->orders[$i];
+                $this->storeOrder($currentOrderDetails); /* Run the storeOrder method for 
+                the current Order. */  
             }
-               //$x = 'I would like to register a ' . $response;
-             //$restaurantKey = (string)$restaurantKey;
-
-        //     //return $restaurantKey;
         }
-        //$x = json_decode($responseJson);
-        //$y = $x->orders[0]; //->instructions
-        //return $z;
-        //return $order1;
-        //$this->storeOrder($y);
-        //return 'All the new orders have been recorded in the database.';
+        /*$a = '[{"type":"item","value":1.31,"rate":0.13}]';
+        $b = json_decode($a);
+        return $b[0]->rate; */
     }
 }
