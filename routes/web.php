@@ -1,37 +1,28 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\GetController;
 use App\Http\Controllers\PollController;
 use App\Http\Controllers\DatabaseController;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
+use App\Http\Controllers\DeliveryController;
 
 Route::get('/', function () {
     return view('welcome');
 });
-/*
-Route::view("/The_Paratha_Restaurant","tpr");
-Route::view("/The_Sandwich_Restaurant","tsr");
-Route::view("/The_Gujarati_Restaurant","tgr");
+
+/* Go to this URL when you want to make API call to GlobalFood Accepted Orders API.
+    This route would be redundant and must be removed in a real world application.
+    We would design the app in such a way that it would poll to the GlobalFood Accepted
+    Orders API at regular intervals.
 */
-
-//Testing of sending HTTP Get request:
-Route::view("getFromReqRes","getRequest");
-Route::get('/sendGetRequest',[GetController::class,'getThat']);
-//Route::view("/gotData","gotData");
-
-// Go to this URL when you want to make API call to GlobalFood Accepted Orders API. 
 Route::get('/queryGF',[PollController::class,'poll']);
 
-//Get data from 'restaurants' database:
+/* Redirect the customer to the view showing the details of the restaurant chosen by the customer
+    from the home page, which shows the 'welcome' view.
+*/
 Route::get('/restaurants/{endChars}',[DatabaseController::class,'uidInfo',['uidInfo' => 'endChars']]);
+
+/*create a delivery: This route would be redundant and must be removed in a real world application.
+    We would design the app in such a way that it would create new deliveries using the 
+    Doordash Drive classic API as soon as an order is received, which needs to be delivered via doordash.
+*/
+Route::get('/delivery',[DeliveryController::class,'createDelivery']);
