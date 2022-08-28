@@ -63,72 +63,49 @@ class DeliveryController extends Controller
         return $jwt;
     }
 
-    function createDelivery(){
-
+    function createDelivery(object $order_json){
+      /*This method creates a fresh delivery on the Doordash Developer Portal under 
+        'Delivery Simulator':
+        https://developer.doordash.com/portal/integration/drive_classic/delivery_simulator
+        with parameters obtained from the fresh order received over the
+        Food Ordering API poll call. */
         $jwt = $this->createJWT();
         $request_body ='{
           "pickup_address": {
-            "city": "San Francisco",
-            "state": "California",
-            "street": "101 Howard Street",
-            "unit": "Apt 301",
-            "zip_code": 94105,
+            "city": "' . $order_json->restaurant_city . '",
+            "state": "' . $order_json->restaurant_state . '",
+            "street": "' . $order_json->restaurant_street . '",
+            "unit": "",
+            "zip_code": "' . $order_json->restaurant_zipcode . '",
             "location": {
-              "lng": -122.431297,
-              "lat": 37.773972
+              "lng": ' . $order_json->restaurant_latitude . ',
+              "lat": ' . $order_json->restaurant_longitude . '
             }
           },
-          "pickup_phone_number": "+16505555555",
+          "pickup_phone_number": "' . $order_json->restaurant_phone . '",
           "dropoff_address": {
-            "city": "San Francisco",
-            "state": "California",
-            "street": "901 Market Street",
-            "unit": "Suite #600",
-            "zip_code": "94105",
-            "full_address": "901 Market Street 6th Floor, San Francisco, CA 94103"
+            "city": "' . $order_json->client_address_parts->city . '",
+            "state": "",
+            "street": "' . $order_json->client_address_parts->street . '",
+            "unit": "",
+            "zip_code": "' . $order_json->client_address_parts->more_address . '",
+            "full_address": "' . $order_json->client_address . '"
           },
           "customer": {
-            "phone_number": "+16505555555",
-            "business_name": "Mega Corp HQ",
-            "first_name": "Jane",
-            "last_name": "Goodall",
-            "email": "jane.goodall@megacorp.io",
-            "should_send_notifications": true,
+            "phone_number": "' . $order_json->client_phone . '",
+            "business_name": "",
+            "first_name": "' . $order_json->client_first_name . '",
+            "last_name": "' . $order_json->client_last_name . '",
+            "email": "' . $order_json->client_email . '",
+            "should_send_notifications": false,
             "locale": "en-US"
           },
-          "order_value": 1999,
-          "pickup_time": "2018-08-22T17:20:28Z",
-          "delivery_time": "2018-08-22T17:21:28Z",
-          "pickup_window_start_time": "2018-08-22T17:20:12Z",
-          "pickup_window_end_time": "2018-08-22T17:40:28Z",
-          "delivery_window_start_time": "2018-08-22T18:15:28Z",
-          "delivery_window_end_time": "2018-08-22T18:35:28Z",
-          "items": [
-            {
-              "name": "Mega Bean and Cheese Burrito",
-              "description": "Mega Burrito contains the biggest beans of the land with extra cheese.",
-              "barcode": "12342830041",
-              "quantity": 2,
-              "external_id": "123-123443434b",
-              "volume": 5.3,
-              "weight": 2.8,
-              "price": 1000
-            }
-          ],
-          "team_lift_required": true,
-          "barcode_scanning_required": false,
-          "pickup_business_name": "Chipotle",
-          "pickup_instructions": "Enter gate code 1234 on the callbox.",
-          "dropoff_instructions": "Lock the front door after delivering the food.",
-          "order_volume": 5,
-          "tip": 500,
-          "external_delivery_id": "1352646-2420",
-          "driver_reference_tag": "1",
-          "external_business_name": "string",
-          "external_store_id": "mega-corp-2340593",
+          "order_value": ' . ($order_json->total_price*100) . ',
+          "pickup_time": "' . $order_json->fulfill_at . '",
+          "external_business_name": "' . $order_json->restaurant_name . '",
+          "external_store_id": "' . $order_json->restaurant_id . '",
           "contains_alcohol": false,
-          "requires_catering_setup": true,
-          "num_items": 1,
+          "requires_catering_setup": false,
           "signature_required": false,
           "allow_unattended_delivery": true,
           "delivery_metadata": {
@@ -140,6 +117,7 @@ class DeliveryController extends Controller
           ],
           "is_contactless_delivery": false
         }';
+        //  return $request_body;
           $headers = array(
             "Content-type: application/json",
             "Authorization: Bearer ".$jwt
@@ -153,4 +131,10 @@ class DeliveryController extends Controller
           $result = curl_exec($ch);
           echo($result);
     }
+
+    /*For future commit:
+    function getUpdateOnDelivery(){
+      $jwt = $this->createJWT();
+
+    } */
 }

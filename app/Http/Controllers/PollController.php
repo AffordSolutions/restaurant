@@ -85,7 +85,12 @@ class PollController extends Controller
         $order->payment = $res->payment;
         $order->for_later = $res->for_later;
         $order->client_address = $res->client_address;
-        $order->client_address_parts = $res->client_address_parts;
+        /* $order->client_address_parts = $res->client_address_parts; //delivery-address- This
+            is an array, which cannot be saved in a varchar datatype field in the database.
+            For now, we have commented it since we want to focus on creating a delivery
+            as soon as the response received from the Food Ordering API yields a
+            new order. This should be done for every order contained in the received JSON payload.
+        */
         // $order->items = $res->items;
         // $order->tax_list_type = $res->tax_list[0]->type;
         // $order->tax_list_value = $res->tax_list[1]->value;
@@ -106,8 +111,6 @@ class PollController extends Controller
                 'Accept' => 'application/json',
                 'Glf-Api-Version' => '1'
                ])->post('https://pos.globalfoodsoft.com/pos/order/pop');
-               //$emptyResponse = '{"count":0,"orders":[]}';
-            //if($response != $emptyResponse){
             $decodedResponse = json_decode($response);
             $count = $decodedResponse->count; /* The total number of orders received by 
                 all the restaurants registered on the GloriaFood under your partnernet account
@@ -116,12 +119,16 @@ class PollController extends Controller
                 until all the orders are looped through.
                 */
                 $currentOrderDetails = $decodedResponse->orders[$i];
+                //return $currentOrderDetails->restaurant_zipcode;
                 $this->storeOrder($currentOrderDetails); /* Run the storeOrder method for 
-                the current Order. */  
+                the current Order. */
+                app('App\Http\Controllers\DeliveryController')->createDelivery($currentOrderDetails);
+                /* Run 'createDelivrey' method of DeliveryController with the current Order Details.
+                    This should create a new delivery in the Doordash Developer portal under 
+                    'Delivery Simulator':
+                    https://developer.doordash.com/portal/integration/drive_classic/delivery_simulator
+                    */
             }
         }
-        /*$a = '[{"type":"item","value":1.31,"rate":0.13}]';
-        $b = json_decode($a);
-        return $b[0]->rate; */
     }
 }

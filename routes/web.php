@@ -20,9 +20,3 @@ Route::get('/queryGF',[PollController::class,'poll']);
     from the home page, which shows the 'welcome' view.
 */
 Route::get('/restaurants/{endChars}',[DatabaseController::class,'uidInfo',['uidInfo' => 'endChars']]);
-
-/*create a delivery: This route would be redundant and must be removed in a real world application.
-    We would design the app in such a way that it would create new deliveries using the 
-    Doordash Drive classic API as soon as an order is received, which needs to be delivered via doordash.
-*/
-Route::get('/delivery',[DeliveryController::class,'createDelivery']);
