@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\delivery;
 
 class DeliveryController extends Controller
 {
@@ -63,6 +64,17 @@ class DeliveryController extends Controller
         return $jwt;
     }
 
+    function headers(String $jsonWebToken){
+      /* This method takes a JSON Web Token as an argument
+            and returns an array in the form necessitated by the Doordash Drive Classic API
+            to be put as header in the curl request to be sent to the API.
+            This method was created to remove code duplication.
+      */
+      return array(
+        "Content-type: application/json",
+        "Authorization: Bearer ".$jsonWebToken
+      );
+    }
     function createDelivery(object $order_json){
       /*This method creates a fresh delivery on the Doordash Developer Portal under 
         'Delivery Simulator':
@@ -117,24 +129,104 @@ class DeliveryController extends Controller
           ],
           "is_contactless_delivery": false
         }';
-        //  return $request_body;
-          $headers = array(
-            "Content-type: application/json",
-            "Authorization: Bearer ".$jwt
-          );
-          
-          $ch = curl_init();
-          curl_setopt($ch, CURLOPT_URL, "https://openapi.doordash.com/drive/v1/deliveries");
-          curl_setopt($ch, CURLOPT_POST, 1);
-          curl_setopt($ch, CURLOPT_POSTFIELDS, $request_body);
-          curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-          $result = curl_exec($ch);
-          echo($result);
+        $headers = $this->headers($jwt);
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://openapi.doordash.com/drive/v1/deliveries");
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $request_body);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); /* This line is not present in the 
+        example available here:
+        https://developer.doordash.com/en-US/docs/drive/tutorials/get_started#get-the-status-of-your-delivery
+        But it is very important for us as it lets 'curl_exex($ch)' to return
+        the value of the execution of the curl request. By default, this statement
+        returns a boolean, which wouldn't be of any use to us for the application.*/
+        $result = curl_exec($ch);
+        $resultInJson = json_decode($result);
+        return $this->saveDelivery($resultInJson);
     }
 
-    /*For future commit:
-    function getUpdateOnDelivery(){
+    function getUpdateOnDeliveries(){
+      /* Created a 'getUpdateOnDeliveries' method under 'DelvieryController' to 
+          get an update on already registered deliveries. Incorporated
+          'saveDelivery' method in this method to update/delete a particular record
+          according to the update received from the API call made to
+          Doordash Drive classic API .
+      */
       $jwt = $this->createJWT();
+      $headers = $this->headers($jwt);
 
-    } */
+      $deliveriesTable = DB::select("SELECT * FROM deliveries");
+      foreach($deliveriesTable as $delivery){
+        $id=$delivery->id;
+        $ch = curl_init();
+        echo "https://openapi.doordash.com/drive/v1/deliveries/{$id}";
+        curl_setopt($ch, CURLOPT_URL, "https://openapi.doordash.com/drive/v1/deliveries/{$id}");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); /* This line is not present in the 
+        example available here:
+        https://developer.doordash.com/en-US/docs/drive/tutorials/get_started#get-the-status-of-your-delivery
+        But it is very important for us as it lets 'curl_exex($ch)' to return
+        the value of the execution of the curl request. By default, this statement
+        returns a boolean.*/
+        $result = curl_exec($ch);
+        //echo $result;
+        $resultInJson = json_decode($result);
+        $this->saveDelivery($resultInJson);
+        //return $resultInJson->id;
+        // echo gettype($result);
+        //return $result;
+        //$jsonResult = json_decode($result);
+        //echo gettype($ch);
+        //echo gettype($ch) . "<br>";
+        //echo($result);
+        //echo('<br/><br/>');
+        // return json_decode($result)->id;
+        // return $result->id;
+      }
+    }
+
+    function saveDelivery(object $response){
+      /* Created 'saveDelivery' method and incorporated it in the 'createDelivery' method
+          under 'DelvieryController' to save relevant information from the response of
+          the API call made to Doordash Drive classic API for creating delivery in
+          'deliveries' table. This method is used to update/delete the entries, too.
+        Created a DELETE SQL statement to delete the entries which contain the
+          details of a 'delivered' delivery from the 'deliveries' database as those 
+          details are not necessary for our application to store. This functionality 
+          is added under 'saveDelivery' method of 'DeliveryController' 
+          Controller.
+      */
+      $id = $response->id;
+      //return DB::select("SELECT * FROM deliveries WHERE id=$id");
+      if(DB::select("SELECT * FROM deliveries WHERE id='$id'")!=null){
+        //return $response->dasher_status;
+        //return DB::select("SELECT dasher_status FROM deliveries WHERE id='$id'")[0]->dasher_status;
+        $deliveryStatus = DB::select("SELECT delivery_status FROM deliveries WHERE id='$id'")[0]
+        ->delivery_status;
+        $dasherStatus = DB::select("SELECT dasher_status FROM deliveries WHERE id='$id'")[0]
+        ->dasher_status;
+        if($deliveryStatus == 'delivered' || $deliveryStatus == 'cancelled'){
+          //echo 'true';
+          DB::delete("DELETE FROM deliveries WHERE id='$id'");
+          echo "This delivery has been deleted successfully.";
+        }
+        else if($dasherStatus != $response->dasher_status || $response->status == 'cancelled'){
+            DB::update("UPDATE deliveries SET delivery_status='$response->status',
+                                              dasher_status='$response->dasher_status'
+            WHERE id='$id'");
+            echo "Delivery details have been updated.";
+        }
+        else echo "Delivery details already exist in the database.";
+      }
+      else{
+        $delivery = new delivery;
+        $delivery->id = $response->id;
+        $delivery->delivery_status = $response->status;
+        $delivery->dasher_status = $response->dasher_status;
+        $delivery->delivery_tracking_url = $response->delivery_tracking_url;
+        $delivery->save();
+      }
+    }
 }

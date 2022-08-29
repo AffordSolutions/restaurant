@@ -20,3 +20,7 @@ Route::get('/queryGF',[PollController::class,'poll']);
     from the home page, which shows the 'welcome' view.
 */
 Route::get('/restaurants/{endChars}',[DatabaseController::class,'uidInfo',['uidInfo' => 'endChars']]);
+
+/* This route is a temporary one, which is used to execute 'getUpdateOnDelivery' method,
+    which makes API call to get an update on a particular delivery using delivery ID.*/
+Route::get('deliveryDetails',[DeliveryController::class,'getUpdateOnDeliveries']);
