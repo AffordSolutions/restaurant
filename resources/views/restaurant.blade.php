@@ -6,6 +6,4 @@
         data-glf-ruid= {{$dgr}}>
         See MENU & Order
     </span>
-    {{-- <p>{{$dgc}}</p> --}}
-    {{-- <p>{{$dgr}}</p> --}}
     <script src="https://www.fbgcdn.com/embedder/js/ewm2.js" defer async ></script>

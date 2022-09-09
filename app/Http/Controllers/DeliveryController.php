@@ -164,61 +164,46 @@ class DeliveryController extends Controller
         echo "https://openapi.doordash.com/drive/v1/deliveries/{$id}";
         curl_setopt($ch, CURLOPT_URL, "https://openapi.doordash.com/drive/v1/deliveries/{$id}");
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); /* This line is not present in the 
-        example available here:
-        https://developer.doordash.com/en-US/docs/drive/tutorials/get_started#get-the-status-of-your-delivery
-        But it is very important for us as it lets 'curl_exex($ch)' to return
-        the value of the execution of the curl request. By default, this statement
-        returns a boolean.*/
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec($ch);
-        //echo $result;
         $resultInJson = json_decode($result);
         $this->saveDelivery($resultInJson);
-        //return $resultInJson->id;
-        // echo gettype($result);
-        //return $result;
-        //$jsonResult = json_decode($result);
-        //echo gettype($ch);
-        //echo gettype($ch) . "<br>";
-        //echo($result);
-        //echo('<br/><br/>');
-        // return json_decode($result)->id;
-        // return $result->id;
       }
     }
 
     function saveDelivery(object $response){
-      /* Created 'saveDelivery' method and incorporated it in the 'createDelivery' method
-          under 'DelvieryController' to save relevant information from the response of
-          the API call made to Doordash Drive classic API for creating delivery in
-          'deliveries' table. This method is used to update/delete the entries, too.
-        Created a DELETE SQL statement to delete the entries which contain the
-          details of a 'delivered' delivery from the 'deliveries' database as those 
-          details are not necessary for our application to store. This functionality 
-          is added under 'saveDelivery' method of 'DeliveryController' 
-          Controller.
+      /* 
+      Added two new columns 'delivery_created_at' and 'last_updated_at' in 
+        'deliveries' table. The former field will be filled while saving 
+        the delivery details in the table from 'updated_at' key's value
+        from the response of the 'create delivery' API call
+        received from Doordash Drive Classic API, and the
+        latter will be filled while updating the delivery details in the
+        table from the same key's value from the respose of 'update delivery'
+        API call received from Doordash Drive Classic API.
       */
       $id = $response->id;
-      //return DB::select("SELECT * FROM deliveries WHERE id=$id");
       if(DB::select("SELECT * FROM deliveries WHERE id='$id'")!=null){
-        //return $response->dasher_status;
-        //return DB::select("SELECT dasher_status FROM deliveries WHERE id='$id'")[0]->dasher_status;
         $deliveryStatus = DB::select("SELECT delivery_status FROM deliveries WHERE id='$id'")[0]
         ->delivery_status;
         $dasherStatus = DB::select("SELECT dasher_status FROM deliveries WHERE id='$id'")[0]
         ->dasher_status;
         if($deliveryStatus == 'delivered' || $deliveryStatus == 'cancelled'){
-          //echo 'true';
           DB::delete("DELETE FROM deliveries WHERE id='$id'");
           echo "This delivery has been deleted successfully.";
         }
         else if($dasherStatus != $response->dasher_status || $response->status == 'cancelled'){
             DB::update("UPDATE deliveries SET delivery_status='$response->status',
-                                              dasher_status='$response->dasher_status'
+                                              dasher_status='$response->dasher_status',
+                                              last_updated_at='$response->updated_at'
             WHERE id='$id'");
             echo "Delivery details have been updated.";
+            echo $response->delivery_tracking_url;
         }
-        else echo "Delivery details already exist in the database.";
+        else {
+          echo "Delivery details already exist in the database.";
+          echo $response->delivery_tracking_url;
+        }
       }
       else{
         $delivery = new delivery;
@@ -226,7 +211,27 @@ class DeliveryController extends Controller
         $delivery->delivery_status = $response->status;
         $delivery->dasher_status = $response->dasher_status;
         $delivery->delivery_tracking_url = $response->delivery_tracking_url;
+        $delivery->delivery_created_at = $response->updated_at;
         $delivery->save();
+
+        echo $response->delivery_tracking_url;
       }
     }
-}
+  }
+    /*
+    function redirectToURL(String $url){ //(String $url)
+      return redirect("{$url}");
+    }
+    function temp(){
+      $x = "https://time.is/UTC";
+      //return $x;
+      return $this->redirectToURL($x); //
+    }
+
+    function timeNow(){
+      return now();
+    }
+ 
+updated_at=NOW(),
+
+*/

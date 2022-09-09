@@ -15,22 +15,11 @@ class PollController extends Controller
     I have referred to  
         https://laravel.com/docs/9.x/scheduling#running-the-scheduler-locally
         to run the task scheduler on my local machine.
-    As of now, though, the poll() method will work as desired only if there is only one
-        new order when the Globalfood API is accessed i.e. every minute.
-    */
-
+*/
     //This method stores a new order in a new row in 'orders123' table.
     public function storeOrder(object $res){
-        /*
-        The commented code in this method had to be commented as 
-            some parts of the order contain array(s).
-        I have learned to save data received as array(s) in table fields,
-            but for the purpose of this project, these arrays do not seem to be
-            needed to be saved in my database.
-        */
         $order = new order;
         $order->instructions = $res->instructions;
-        //$order->coupons = $res->coupons;
         $order->missed_reason  = $res->missed_reason ;
         $order->billing_details  = $res->billing_details ;
         $order->fulfillment_option  = $res->fulfillment_option ;
@@ -85,16 +74,6 @@ class PollController extends Controller
         $order->payment = $res->payment;
         $order->for_later = $res->for_later;
         $order->client_address = $res->client_address;
-        /* $order->client_address_parts = $res->client_address_parts; //delivery-address- This
-            is an array, which cannot be saved in a varchar datatype field in the database.
-            For now, we have commented it since we want to focus on creating a delivery
-            as soon as the response received from the Food Ordering API yields a
-            new order. This should be done for every order contained in the received JSON payload.
-        */
-        // $order->items = $res->items;
-        // $order->tax_list_type = $res->tax_list[0]->type;
-        // $order->tax_list_value = $res->tax_list[1]->value;
-        // $order->tax_list_rate = $res->tax_list[2]->rate;
         $order->used_payment_methods_0 = $res->used_payment_methods[0];
         $order->save();
     }
@@ -119,7 +98,6 @@ class PollController extends Controller
                 until all the orders are looped through.
                 */
                 $currentOrderDetails = $decodedResponse->orders[$i];
-                //return $currentOrderDetails->restaurant_zipcode;
                 $this->storeOrder($currentOrderDetails); /* Run the storeOrder method for 
                 the current Order. */
                 app('App\Http\Controllers\DeliveryController')->createDelivery($currentOrderDetails);
