@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\delivery;
-
+use Illuminate\Support\Facades\Mail; /* Mail facade - required for the functionality of
+  sending email as soon as a delivery tracking URL is available to the application.
+ */
+use App\Mail\DeliveryCreated;
 class DeliveryController extends Controller
 {
     /* We are using Doordash Drive classic API.
@@ -144,7 +147,10 @@ class DeliveryController extends Controller
         returns a boolean, which wouldn't be of any use to us for the application.*/
         $result = curl_exec($ch);
         $resultInJson = json_decode($result);
-        return $this->saveDelivery($resultInJson);
+        /* Send mail to the customer to track their delivery using the delivery tracking URL
+        provided by DoorDash Drive Classic API's response to 'create delivery' API call: */
+        $this->saveDelivery($resultInJson);
+        Mail::to($resultInJson->customer->email)->send(new DeliveryCreated($resultInJson));
     }
 
     function getUpdateOnDeliveries(){
@@ -161,13 +167,28 @@ class DeliveryController extends Controller
       foreach($deliveriesTable as $delivery){
         $id=$delivery->id;
         $ch = curl_init();
-        echo "https://openapi.doordash.com/drive/v1/deliveries/{$id}";
+        echo "https://openapi.doordash.com/drive/v1/deliveries/{$id}<br>";
+        //echo("Hamburger" . PHP_EOL . "Yupp");
+        // echo("Hamburger           Yupp");
+        // echo("Hamburger");
+        // echo("Yupp");
+        // echo "Hamburger       Yupp";
+        // echo "H" . PHP_EOL . "l";
+        // echo "<br>G"; This finally worked. Does this mean that echo statements are treated as HTML?
         curl_setopt($ch, CURLOPT_URL, "https://openapi.doordash.com/drive/v1/deliveries/{$id}");
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec($ch);
         $resultInJson = json_decode($result);
         $this->saveDelivery($resultInJson);
+        $deliveryTrackingURL = $resultInJson->delivery_tracking_url;
+        if($deliveryTrackingURL != null){
+          echo $deliveryTrackingURL . "<br>";
+          // echo "Hamburger";
+          // echo "\n\n";
+          //echo $resultInJson->delivery_tracking_url;
+          // Mail::to($resultInJson->customer->email)->send(new DeliveryCreated($resultInJson));
+        }
       }
     }
 
@@ -190,19 +211,19 @@ class DeliveryController extends Controller
         ->dasher_status;
         if($deliveryStatus == 'delivered' || $deliveryStatus == 'cancelled'){
           DB::delete("DELETE FROM deliveries WHERE id='$id'");
-          echo "This delivery has been deleted successfully.";
+          echo "This delivery has been deleted successfully.<br>";
         }
         else if($dasherStatus != $response->dasher_status || $response->status == 'cancelled'){
             DB::update("UPDATE deliveries SET delivery_status='$response->status',
                                               dasher_status='$response->dasher_status',
                                               last_updated_at='$response->updated_at'
             WHERE id='$id'");
-            echo "Delivery details have been updated.";
-            echo $response->delivery_tracking_url;
+            echo "Delivery details have been updated.<br>";
+            echo $response->delivery_tracking_url . "<br>";
         }
         else {
-          echo "Delivery details already exist in the database.";
-          echo $response->delivery_tracking_url;
+          echo "Delivery details already exist in the database.<br>";
+          echo $response->delivery_tracking_url . "<br>";
         }
       }
       else{
@@ -214,15 +235,16 @@ class DeliveryController extends Controller
         $delivery->delivery_created_at = $response->updated_at;
         $delivery->save();
 
-        echo $response->delivery_tracking_url;
+        echo $response->delivery_tracking_url . "<br>";
       }
     }
   }
     /*
-    function redirectToURL(String $url){ //(String $url)
-      return redirect("{$url}");
+    redirect("{$url}");
     }
-    function temp(){
+    functionfu
+    nction redirectToURL(String $url){ //(String $url)
+       ){
       $x = "https://time.is/UTC";
       //return $x;
       return $this->redirectToURL($x); //

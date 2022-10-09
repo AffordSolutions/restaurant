@@ -11,5 +11,7 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 sample_order_with_delivery.md
+changes_before_commit.md
+Mailgun_integration.md
 /.idea
 /.vscode

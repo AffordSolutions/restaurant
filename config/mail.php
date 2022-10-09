@@ -12,8 +12,11 @@ return [
     | and used as needed; however, this mailer will be used by default.
     |
     */
-
-    'default' => env('MAIL_MAILER', 'smtp'),
+/*
+Not using 'failover configuration' for this application to keep it simple
+    as the purpose of this project is demonstration.
+*/
+    'default' => env('MAIL_MAILER', 'mailgun'),
 
     /*
     |--------------------------------------------------------------------------
@@ -92,8 +95,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', 'noreply@fooddelivery.system'),
+        'name' => env('MAIL_FROM_NAME', 'Food Delivery System'),
     ],
 
     /*

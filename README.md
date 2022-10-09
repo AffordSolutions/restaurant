@@ -1,22 +1,16 @@
 A Laravel Project demonstrating restaurant ordering system using GloriaFood API
     and delivery system using Doordash Drive classic API.
 Changes since last commit: 
--Deleted 'getRequest' view as it was not necessary anymore for our application.
--Deleted 'gotData' view as it was not necessary anymore for our application.
--Deleted 'responseFromGF' view as it was not necessary anymore for our application.
--Deleted 'queryGF' route from 'web.php' file as it was used to run 'poll'
-    method of 'PollController', and we took care of running this method on
-    server using Laravel Task Scheduler.
--Deleted 'deliveryDetails' route from 'web.php' file as it was used to run
-    'getUpdateOnDeliveries' method of 'DeliveryController', and we took care of
-    running this method on server using Laravel Task Scheduler.
--Removed redundant commented code wherever seemed necessary.
--Added two new columns 'delivery_created_at' and 'last_updated_at' in 
-        'deliveries' table. The former field will be filled while saving 
-        the delivery details in the table from 'updated_at' key's value
-        from the response of the 'create delivery' API call
-        received from Doordash Drive Classic API, and the
-        latter will be filled while updating the delivery details in the
-        table from the same key's value from the respose of 'update delivery'
-        API call received from Doordash Drive Classic API. 'saveDelivery'
-        method of 'DelieveryController' will be used for these purposes.
+-Added "changes_before_commit.md" and "Mailgun_integration.md" in .gitignore.
+    The latter contains command line steps to install mailgun on a local machine
+    and send a test mail to an email of the user's choice. This has been included in
+    .gitignore since it contains my mailgun credentials.
+-Provision to send an email with delivery tracking URL to customers placing orders
+    has been added in "createDelivery" method of "DeliveryController" controller.
+-Created a Mailable named "DeliveryCreated" using artisan command "php artisan make:mail".
+    Created a "build" method in it passing "deliveryInfoEmail" view to it, which is the 
+    view of the email to be sent, with parameters exclusive to the delivery to notify
+    which the email is sent.
+-Changed the default mailer ot "mailgun" in "mail.php" located under "config" directory.
+
+    
