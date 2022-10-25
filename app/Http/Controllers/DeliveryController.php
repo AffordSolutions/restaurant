@@ -1,14 +1,19 @@
 <?php
-
+declare(strict_types=1); 
 namespace App\Http\Controllers;
-
+require 'vendor/autoload.php';
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\delivery;
-use Illuminate\Support\Facades\Mail; /* Mail facade - required for the functionality of
+/*use Illuminate\Support\Facades\Mail; Mail facade - required for the functionality of
   sending email as soon as a delivery tracking URL is available to the application.
  */
-use App\Mail\DeliveryCreated;
+/* Integration of Sendgrid Mail Send API:
+https://docs.sendgrid.com/for-developers/sending-email/quickstart-php
+*/
+use \SendGrid\Mail\Mail;
+// use App\Mail\DeliveryCreated; This is redundant, since Sendgrid Mail Send API has been integrated.
+
 class DeliveryController extends Controller
 {
     /* We are using Doordash Drive classic API.
@@ -150,10 +155,11 @@ class DeliveryController extends Controller
         /* Send mail to the customer to track their delivery using the delivery tracking URL
         provided by DoorDash Drive Classic API's response to 'create delivery' API call: */
         $this->saveDelivery($resultInJson);
-        Mail::to($resultInJson->customer->email)->send(new DeliveryCreated($resultInJson));
+        $this->sendDeliveryEmail($resultInJson); // Sendgrid Mail Send API integration
     }
 
     function getUpdateOnDeliveries(){
+      echo DB::select("SELECT Email_ID FROM companydetails WHERE Department='Restaurant'")[0]->Email_ID;
       /* Created a 'getUpdateOnDeliveries' method under 'DelvieryController' to 
           get an update on already registered deliveries. Incorporated
           'saveDelivery' method in this method to update/delete a particular record
@@ -167,14 +173,6 @@ class DeliveryController extends Controller
       foreach($deliveriesTable as $delivery){
         $id=$delivery->id;
         $ch = curl_init();
-        echo "https://openapi.doordash.com/drive/v1/deliveries/{$id}<br>";
-        //echo("Hamburger" . PHP_EOL . "Yupp");
-        // echo("Hamburger           Yupp");
-        // echo("Hamburger");
-        // echo("Yupp");
-        // echo "Hamburger       Yupp";
-        // echo "H" . PHP_EOL . "l";
-        // echo "<br>G"; This finally worked. Does this mean that echo statements are treated as HTML?
         curl_setopt($ch, CURLOPT_URL, "https://openapi.doordash.com/drive/v1/deliveries/{$id}");
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -183,11 +181,7 @@ class DeliveryController extends Controller
         $this->saveDelivery($resultInJson);
         $deliveryTrackingURL = $resultInJson->delivery_tracking_url;
         if($deliveryTrackingURL != null){
-          echo $deliveryTrackingURL . "<br>";
-          // echo "Hamburger";
-          // echo "\n\n";
-          //echo $resultInJson->delivery_tracking_url;
-          // Mail::to($resultInJson->customer->email)->send(new DeliveryCreated($resultInJson));
+          // $this->sendDeliveryEmail($resultInJson); Not necessary in within this function.
         }
       }
     }
@@ -211,19 +205,19 @@ class DeliveryController extends Controller
         ->dasher_status;
         if($deliveryStatus == 'delivered' || $deliveryStatus == 'cancelled'){
           DB::delete("DELETE FROM deliveries WHERE id='$id'");
-          echo "This delivery has been deleted successfully.<br>";
+          echo "This delivery has been deleted successfully.";//<br>";
         }
         else if($dasherStatus != $response->dasher_status || $response->status == 'cancelled'){
             DB::update("UPDATE deliveries SET delivery_status='$response->status',
                                               dasher_status='$response->dasher_status',
                                               last_updated_at='$response->updated_at'
             WHERE id='$id'");
-            echo "Delivery details have been updated.<br>";
-            echo $response->delivery_tracking_url . "<br>";
+            echo "Delivery details have been updated.";//<br>";
+            //echo $response->delivery_tracking_url . "<br>";
         }
         else {
-          echo "Delivery details already exist in the database.<br>";
-          echo $response->delivery_tracking_url . "<br>";
+          echo "Delivery details already exist in the database.";//<br>";
+          // echo $response->delivery_tracking_url . "<br>";
         }
       }
       else{
@@ -238,22 +232,43 @@ class DeliveryController extends Controller
         echo $response->delivery_tracking_url . "<br>";
       }
     }
+
+    function sendDeliveryEmail(object $response){
+      // Sendgrid Mail Send API integration:
+      $email = new Mail();
+      // Replace the email address and name with your verified sender
+      $email->setFrom(
+        DB::select("SELECT Email_ID FROM companydetails WHERE Department='Restaurant'")[0]->Email_ID,
+        'Restaurant Ordering System'
+      );
+      $email->setSubject(
+        'Delivery #' . $response->id . ' created for your Order'
+      );
+      // Replace the email address and name with your recipient
+      $email->addTo(
+        $response->customer->email,
+        $response->customer->first_name . ' ' . $response->customer->last_name
+      );
+      $email->addContent(
+        'text/html',
+        'Hi, ' . $response->customer->first_name . ".<br/>You may track your order here:
+         " . $response->delivery_tracking_url
+      );
+      $sendgrid = new \SendGrid(getenv('SENDGRID_API_KEY')); /* This finally worked only
+      after manually adding an environment variable for the current user on the local machine with variable name 
+      'SENDGRID_API_KEY' and variable value as the API key as created by Sendgrid: URL:
+      https://app.sendgrid.com/guide/integrate/langs (login is required.)*/
+      try {
+          $response = $sendgrid->send($email);
+          printf("Response status: %d\n\n", $response->statusCode());
+
+          $headers = array_filter($response->headers());
+          echo "Response Headers\n\n";
+          foreach ($headers as $header) {
+              echo '- ' . $header . "\n";
+          }
+      } catch (Exception $e) {
+          echo 'Caught exception: '. $e->getMessage() ."\n";
+      }
+    }
   }
-    /*
-    redirect("{$url}");
-    }
-    functionfu
-    nction redirectToURL(String $url){ //(String $url)
-       ){
-      $x = "https://time.is/UTC";
-      //return $x;
-      return $this->redirectToURL($x); //
-    }
-
-    function timeNow(){
-      return now();
-    }
- 
-updated_at=NOW(),
-
-*/

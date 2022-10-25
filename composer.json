@@ -10,6 +10,7 @@
         "laravel/framework": "^9.11",
         "laravel/sanctum": "^2.14.1",
         "laravel/tinker": "^2.7",
+        "sendgrid/sendgrid": "^8.0",
         "symfony/http-client": "^6.0",
         "symfony/mailgun-mailer": "^6.0"
     },

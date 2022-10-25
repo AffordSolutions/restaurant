@@ -1,7 +1,10 @@
 <?php
 
 namespace App\Mail;
-
+/* This file can be safely deleted, as it was a part of the Mailgun SMTP integration
+    and now we have integrated Sendgrid Mail Send API, but let's keep it as it is.
+    There is no harm.
+*/
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;

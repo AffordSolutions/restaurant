@@ -27,6 +27,18 @@ class Kernel extends ConsoleKernel
             $controller = new \App\Http\Controllers\DeliveryController();
             $controller->getUpdateOnDeliveries();
         })->everyMinute(); // The task scheduler will run every minute.
+// Was trying to learn to integrate Sendgrid Mail Send API:
+        /*$schedule->call(function(){
+            $controller = new \App\Http\Controllers\tempEmailController();
+            $controller->sendViaSendgrid();
+        })->everyMinute(); // The task scheduler will run every minute.
+    */
+
+        /*$schedule->call(function(){
+            $controller = new \App\Http\Controllers\DeliveryController();
+            $controller->sendViaSendgrid();
+        })->everyMinute(); // The task scheduler will run every minute.
+        */
     }
 
     /**
