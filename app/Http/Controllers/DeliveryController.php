@@ -26,10 +26,10 @@ class DeliveryController extends Controller
       in the API call 
         https://openapi.doordash.com/drive/v2/deliveries/
       instead of v2.
-      For now, I have taken the example payload from
+      At one point, I had taken the example payload from
         https://developer.doordash.com/en-US/api/drive_classic/#tag/Delivery/operation/DeliveryListPost
       just to see how to create a delivery successfully using the Doordash Drive Classic API.
-      The created deliveries appear as created in my developer portal account.
+      The created deliveries appear as created in my developer portal account under "delivery simulator".
     */
     function base64UrlEncode(string $data): string
     {
@@ -147,15 +147,16 @@ class DeliveryController extends Controller
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); /* This line is not present in the 
         example available here:
         https://developer.doordash.com/en-US/docs/drive/tutorials/get_started#get-the-status-of-your-delivery
-        But it is very important for us as it lets 'curl_exex($ch)' to return
-        the value of the execution of the curl request. By default, this statement
+        But it is very important for us as it lets 'curl_exec($ch)' to return
+        the response against the execution of the curl request. Without this line, 'curl_exec($ch)'
         returns a boolean, which wouldn't be of any use to us for the application.*/
         $result = curl_exec($ch);
-        $resultInJson = json_decode($result);
-        /* Send mail to the customer to track their delivery using the delivery tracking URL
-        provided by DoorDash Drive Classic API's response to 'create delivery' API call: */
-        $this->saveDelivery($resultInJson);
-        $this->sendDeliveryEmail($resultInJson); // Sendgrid Mail Send API integration
+        $resultAsObject = json_decode($result);
+        $this->saveDelivery($resultAsObject);
+        /* Send mail to the customer so that they can track their delivery using
+        the delivery tracking URL provided by DoorDash Drive Classic API's response
+        to 'create delivery' API call: */
+        $this->sendDeliveryEmail($resultAsObject); // Sendgrid Mail Send API integration
     }
 
     function getUpdateOnDeliveries(){
@@ -177,12 +178,8 @@ class DeliveryController extends Controller
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec($ch);
-        $resultInJson = json_decode($result);
-        $this->saveDelivery($resultInJson);
-        $deliveryTrackingURL = $resultInJson->delivery_tracking_url;
-        if($deliveryTrackingURL != null){
-          // $this->sendDeliveryEmail($resultInJson); Not necessary in within this function.
-        }
+        $resultAsObject = json_decode($result);
+        $this->saveDelivery($resultAsObject);
       }
     }
 
@@ -192,10 +189,10 @@ class DeliveryController extends Controller
         'deliveries' table. The former field will be filled while saving 
         the delivery details in the table from 'updated_at' key's value
         from the response of the 'create delivery' API call
-        received from Doordash Drive Classic API, and the
+        made to Doordash Drive Classic API, and the
         latter will be filled while updating the delivery details in the
         table from the same key's value from the respose of 'update delivery'
-        API call received from Doordash Drive Classic API.
+        API call made to Doordash Drive Classic API.
       */
       $id = $response->id;
       if(DB::select("SELECT * FROM deliveries WHERE id='$id'")!=null){
@@ -212,12 +209,10 @@ class DeliveryController extends Controller
                                               dasher_status='$response->dasher_status',
                                               last_updated_at='$response->updated_at'
             WHERE id='$id'");
-            echo "Delivery details have been updated.";//<br>";
-            //echo $response->delivery_tracking_url . "<br>";
+            echo "Delivery details have been updated.";
         }
         else {
-          echo "Delivery details already exist in the database.";//<br>";
-          // echo $response->delivery_tracking_url . "<br>";
+          echo "Delivery details already exist in the database.";
         }
       }
       else{
@@ -229,7 +224,8 @@ class DeliveryController extends Controller
         $delivery->delivery_created_at = $response->updated_at;
         $delivery->save();
 
-        echo $response->delivery_tracking_url . "<br>";
+        echo "New delivery has been created successfully. Track at: ", 
+          $response->delivery_tracking_url . "<br>";
       }
     }
 
@@ -244,14 +240,13 @@ class DeliveryController extends Controller
       $email->setSubject(
         'Delivery #' . $response->id . ' created for your Order'
       );
-      // Replace the email address and name with your recipient
       $email->addTo(
         $response->customer->email,
         $response->customer->first_name . ' ' . $response->customer->last_name
       );
       $email->addContent(
         'text/html',
-        'Hi, ' . $response->customer->first_name . ".<br/>You may track your order here:
+        'Hi, ' . $response->customer->first_name . ".<br/>You may track your order here: 
          " . $response->delivery_tracking_url
       );
       $sendgrid = new \SendGrid(getenv('SENDGRID_API_KEY')); /* This finally worked only
@@ -259,10 +254,10 @@ class DeliveryController extends Controller
       'SENDGRID_API_KEY' and variable value as the API key as created by Sendgrid: URL:
       https://app.sendgrid.com/guide/integrate/langs (login is required.)*/
       try {
-          $response = $sendgrid->send($email);
-          printf("Response status: %d\n\n", $response->statusCode());
+          $mailSendResponse = $sendgrid->send($email);
+          printf("Response status: %d\n\n", $mailSendResponse->statusCode());
 
-          $headers = array_filter($response->headers());
+          $headers = array_filter($mailSendResponse->headers());
           echo "Response Headers\n\n";
           foreach ($headers as $header) {
               echo '- ' . $header . "\n";

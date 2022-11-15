@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class delivery extends Model
 { /* A model to be connected with 'deliveries' table of the database.
-    We have used it to save a new entry in the table in 'DeliveryController'
+    We have used it to save a new entry in the table using 'DeliveryController'
     controller's 'saveDelivery' method. 
     */
     use HasFactory;

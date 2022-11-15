@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\buttonInformation;
 use lluminate\Support\Facades\DB\QueryException;
 
 class DatabaseController extends Controller

@@ -92,8 +92,8 @@ class PollController extends Controller
                ])->post('https://pos.globalfoodsoft.com/pos/order/pop');
             $decodedResponse = json_decode($response);
             $count = $decodedResponse->count; /* The total number of orders received by 
-                all the restaurants registered on the GloriaFood under your partnernet account
-                combined. */
+                all the restaurants registered on the GloriaFood under your partnernet account since 
+                the last request. */
             for($i = 0; $i < $count; $i++){ /* Keep looping through the orders
                 until all the orders are looped through.
                 */
